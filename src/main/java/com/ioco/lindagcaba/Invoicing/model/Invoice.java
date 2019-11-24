@@ -1,15 +1,17 @@
 package com.ioco.lindagcaba.Invoicing.model;
 
-import com.sun.istack.NotNull;
+
+import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotBlank;
+import javax.validation.Valid;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 
 @Entity
@@ -18,16 +20,20 @@ public class Invoice implements Serializable {
     @Id
     @GeneratedValue
     private Long id;
-    @NotBlank
+    @NotBlank(message = "client name is required and should not be blank")
     @Column
     private String client;
     @NotNull
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     @Column
-    private Date invoiceDate;
+    private LocalDate invoiceDate;
     @NotNull
+    @PositiveOrZero(message = "vatRate should be a zero value or above")
     @Column
     private Long vatRate;
-    @OneToMany(mappedBy = "invoice",cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "invoice",cascade = CascadeType.PERSIST,orphanRemoval = true)
+    @NotEmpty
+    @Valid
     private List<LineItem> lineItems = new ArrayList<>();
 
     public List<LineItem> getLineItems() {
@@ -41,7 +47,7 @@ public class Invoice implements Serializable {
     public Invoice(){
         super();
     }
-    public Invoice(@NotBlank String client, Date invoiceDate, Long vatRate) {
+    public Invoice(@NotBlank String client, LocalDate invoiceDate, Long vatRate) {
         this.client = client;
         this.invoiceDate = invoiceDate;
         this.vatRate = vatRate;
@@ -64,11 +70,11 @@ public class Invoice implements Serializable {
         this.client = client;
     }
 
-    public Date getInvoiceDate() {
+    public LocalDate getInvoiceDate() {
         return invoiceDate;
     }
 
-    public void setInvoiceDate(Date invoiceDate) {
+    public void setInvoiceDate(LocalDate invoiceDate) {
         this.invoiceDate = invoiceDate;
     }
 
@@ -80,14 +86,14 @@ public class Invoice implements Serializable {
         this.vatRate = vatRate;
     }
     public BigDecimal getSubTotal(){
-        return lineItems.stream().map(lineItem -> lineItem.getLineItemTotal()).reduce(BigDecimal.ZERO,BigDecimal::add).setScale(2,BigDecimal.ROUND_HALF_UP);
+        return lineItems.stream().map(lineItem -> lineItem.getLineItemTotal()).reduce(BigDecimal::add).get().setScale(2,RoundingMode.HALF_UP);
     }
     public BigDecimal getVat(){
-            return BigDecimal.valueOf(vatRate).divide(new BigDecimal(100)).multiply(getSubTotal());
+            return BigDecimal.valueOf(vatRate).divide(new BigDecimal(100)).multiply(getSubTotal()).setScale(2,RoundingMode.HALF_UP);
     }
 
     public BigDecimal getTotal(){
-        return getSubTotal().add(getVat());
+        return getSubTotal().add(getVat()).setScale(2,RoundingMode.HALF_UP);
     }
     public void addLineItem(LineItem lineItem){
         lineItems.add(lineItem);

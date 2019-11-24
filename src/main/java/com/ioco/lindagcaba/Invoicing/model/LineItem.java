@@ -1,28 +1,29 @@
 package com.ioco.lindagcaba.Invoicing.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import org.springframework.lang.NonNull;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @Entity
 public class LineItem implements Serializable{
     @Id
     @GeneratedValue
     private Long id;
-    @NonNull
+    @NotNull
     @Positive
     @Column
     private Long quantity;
     @NotBlank
     @Column
     private String description;
-    @NonNull
+    @NotNull
     @PositiveOrZero
     @Column
     private BigDecimal unitPrice;
@@ -36,12 +37,10 @@ public class LineItem implements Serializable{
 
     }
 
-    public LineItem(Long id, Long quantity, String description, BigDecimal unitPrice, Invoice invoice) {
-        this.id = id;
+    public LineItem(String description, BigDecimal unitPrice, Long quantity) {
         this.quantity = quantity;
         this.description = description;
         this.unitPrice = unitPrice;
-        this.invoice = invoice;
     }
     public LineItem(){
         super();
@@ -85,7 +84,7 @@ public class LineItem implements Serializable{
     }
 
     public BigDecimal getLineItemTotal(){
-        return BigDecimal.valueOf(quantity).multiply(unitPrice).setScale(2,BigDecimal.ROUND_HALF_UP);
+        return BigDecimal.valueOf(quantity).multiply(unitPrice).setScale(2, RoundingMode.HALF_UP);
     }
 
 }

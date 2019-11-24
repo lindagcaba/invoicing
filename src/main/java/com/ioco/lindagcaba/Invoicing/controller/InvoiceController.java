@@ -24,11 +24,12 @@ public class InvoiceController {
         return invoiceService.getAllInvoices();
     }
     @PostMapping
-    public void addInvoice(@Valid @RequestBody Invoice invoiceData){
+    public Invoice addInvoice(@Valid @RequestBody Invoice invoiceData){
         Invoice invoice = new Invoice(invoiceData.getClient(),invoiceData.getInvoiceDate(),invoiceData.getVatRate());
         List<LineItem> lineItems = invoiceData.getLineItems();
         lineItems.forEach(invoice::addLineItem);
-        invoiceService.addInvoice(invoice);
+        return invoiceService.addInvoice(invoice);
+
     }
     @GetMapping("/{invoiceId}")
     public Invoice viewInvoice(@PathVariable Long invoiceId){
